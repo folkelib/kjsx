@@ -1,0 +1,23 @@
+{
+  "name": "kjsx",
+  "version": "1.0.0",
+  "description": "JSX for Knockout",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "tsc -p ."
+  },
+  "keywords": [
+    "knockout",
+    "jsx"
+  ],
+  "author": "Sidoine De Wispelaere",
+  "license": "MIT",
+  "dependencies": {
+    "knockout": "^3.4.2"
+  },
+  "devDependencies": {
+    "@types/knockout": "^3.4.45",
+    "typescript": "^2.5.2"
+  }
+}
