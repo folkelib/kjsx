@@ -6,7 +6,7 @@
   "types": "./dist/react.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "tsc -p ."
+    "prepublish": "tsc -p ."
   },
   "keywords": [
     "knockout",
