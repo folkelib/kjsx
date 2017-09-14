@@ -1,6 +1,6 @@
 {
   "name": "kjsx",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "JSX for Knockout",
   "main": "./dist/react.js",
   "types": "./dist/react.d.ts",
