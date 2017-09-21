@@ -1,6 +1,6 @@
 {
   "name": "kjsx",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "JSX for Knockout",
   "main": "./dist/react.js",
   "types": "./dist/react.d.ts",
@@ -26,6 +26,8 @@
     "ava": "^0.22.0"
   },
   "ava": {
-    "require": [ "./tests/helpers/setup-browser-env.js"]
+    "require": [
+      "./tests/helpers/setup-browser-env.js"
+    ]
   }
 }
