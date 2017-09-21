@@ -221,6 +221,9 @@ function ko_if(condition, childFactory) {
     return array;
 }
 exports.ko_if = ko_if;
+function isJSXElement(x) {
+    return x.render !== undefined;
+}
 exports.React = {
     appendChild: appendChild,
     appendChildren: appendChildren,
@@ -283,10 +286,15 @@ exports.React = {
             return element_1;
         }
         else {
-            var customElement = new elementType();
-            customElement.props = attributes || {};
-            customElement.children = children;
-            return customElement.render();
+            var customElement = new elementType(attributes || {}, children);
+            if (isJSXElement(customElement)) {
+                customElement.props = attributes || {};
+                customElement.children = children;
+                return customElement.render();
+            }
+            else {
+                return customElement;
+            }
         }
     },
 };

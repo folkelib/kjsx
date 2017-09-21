@@ -82,6 +82,6 @@ export declare const React: {
     appendChildren: (element: HTMLElement, children: (string | number | HTMLElement | KnockoutObservable<string> | KnockoutObservableArray<Node> | (() => number) | HTMLElement[] | undefined)[]) => void;
     createElement<T extends {
         [attribute: string]: any;
-    }>(elementType: string | (new () => JSX.ElementClass), attributes: T, ...children: (string | number | HTMLElement | KnockoutObservable<string> | KnockoutObservableArray<Node> | (() => number) | HTMLElement[] | undefined)[]): HTMLElement | KnockoutObservableArray<HTMLElement>;
+    }>(elementType: string | (new (props: T, children: (string | number | HTMLElement | KnockoutObservable<string> | KnockoutObservableArray<Node> | (() => number) | HTMLElement[] | undefined)[]) => HTMLElement | JSX.ElementClass), attributes: T, ...children: (string | number | HTMLElement | KnockoutObservable<string> | KnockoutObservableArray<Node> | (() => number) | HTMLElement[] | undefined)[]): HTMLElement | KnockoutObservableArray<HTMLElement>;
 };
 export * from "./knockout-projection";

@@ -272,11 +272,15 @@ export function ko_if(condition: () => boolean, childFactory: () => HTMLElement)
 
 export type Children = JSX.Child[];
 
+function isJSXElement(x: any): x is JSX.ElementClass {
+    return x.render !== undefined;
+}
+
 export const React = {
     appendChild,
     appendChildren,
     createElement<T extends {[attribute: string]: any}>(
-        elementType: (new () => JSX.ElementClass) | string,
+        elementType: (new (props: T, children: JSX.Child[]) => JSX.ElementClass | HTMLElement) | string,
         attributes: T,
         ...children: JSX.Child[]) {
         if (typeof elementType === "string"){
@@ -334,10 +338,15 @@ export const React = {
             return element;
         }
         else {
-            const customElement = new elementType();
-            customElement.props = attributes || {};
-            customElement.children = children;
-            return customElement.render();
+            const customElement = new elementType(attributes || {}, children);
+            if (isJSXElement(customElement)) {
+                customElement.props = attributes || {};
+                customElement.children = children;
+                return customElement.render();
+            }
+            else {
+                return customElement;
+            }
         }
     },
 };

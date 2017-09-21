@@ -6,6 +6,9 @@
         "sourceMap": false,
         "outDir": "dist",
         "jsx": "react",
-        "declaration": true
+        "declaration": true,
+        "lib": [
+            "dom", "es2015"
+        ]
     }
 }

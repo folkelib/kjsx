@@ -5,8 +5,10 @@
   "main": "./dist/react.js",
   "types": "./dist/react.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublish": "tsc -p ."
+    "test": "ava dist/tests",
+    "test:watch": "ava --watch dist/tests",
+    "prepublish": "tsc -p .",
+    "prepublish:watch": "tsc -w -p ."
   },
   "keywords": [
     "knockout",
@@ -19,6 +21,11 @@
   },
   "devDependencies": {
     "@types/knockout": "^3.4.45",
-    "typescript": "^2.5.2"
+    "typescript": "^2.5.2",
+    "browser-env": "^3.2.0",
+    "ava": "^0.22.0"
+  },
+  "ava": {
+    "require": [ "./tests/helpers/setup-browser-env.js"]
   }
 }
