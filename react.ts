@@ -3,6 +3,7 @@ import * as ko from "knockout";
 declare global {
     namespace JSX {
         type KnockoutMaybeObservable<T> = KnockoutObservable<T> | T;
+        type RenderOutput = HTMLElement|KnockoutObservableArray<HTMLElement>;
 
         interface ElementAttributesProperty {
             props: any;
@@ -22,35 +23,82 @@ declare global {
 
         interface ButtonElement extends IntrinsicElement {
             type?: "submit" | "button";
+            enable?: KnockoutMaybeObservable<boolean>;
         }
 
         interface InputElement extends IntrinsicElement {
-            textInput?: KnockoutObservable<string>;
-            type: "text" | "password" | "hidden";
+            textInput?: KnockoutObservable<string | number>;
+            type: "text" | "password" | "hidden" | "checkbox" | "password" | "submit";
+            placeholder?: KnockoutMaybeObservable<string>;
+            disabled?: "disabled";
+            checked?: KnockoutMaybeObservable<boolean>;
+            enable?: KnockoutObservable<boolean>;
         }
 
         interface LinkElement extends IntrinsicElement {
-            href?: string;
+            href?: KnockoutMaybeObservable<string>;
         }
 
+        interface SelectElement extends IntrinsicElement {
+            options: KnockoutObservableArray<string>;
+            value: KnockoutObservable<string>;
+        }
+
+        interface TextAreaElement extends IntrinsicElement {
+            textInput: KnockoutObservable<string>;
+            placeholder?: string;
+            rows?: number;
+        }
+
+        interface FormElement extends IntrinsicElement {
+            submit?: () => void;
+        }
+
+        interface ImageElement extends IntrinsicElement{
+            alt?: KnockoutMaybeObservable<string>;
+            width?: KnockoutMaybeObservable<number>;
+            height?: KnockoutMaybeObservable<number>;
+            src: KnockoutMaybeObservable<string>;
+        }
+        
         interface IntrinsicElements {
             div: IntrinsicElement;
             span: IntrinsicElement;
             button: ButtonElement;
             input: InputElement;
             a: LinkElement;
+            i: IntrinsicElement;
             ul: IntrinsicElement;
             li: IntrinsicElement;
             h1: IntrinsicElement;
+            h2: IntrinsicElement;
+            h3: IntrinsicElement;
+            h4: IntrinsicElement;
+            h5: IntrinsicElement;
             table: IntrinsicElement;
+            thead: IntrinsicElement;
+            tbody: IntrinsicElement;
             tr: IntrinsicElement;
             td: IntrinsicElement;
             th: IntrinsicElement;
+            p: IntrinsicElement;
+            label: IntrinsicElement;
+            select: SelectElement;
+            textarea: TextAreaElement;
+            section: IntrinsicElement;
+            header: IntrinsicElement;
+            footer: IntrinsicElement;
+            form: FormElement;
+            fieldset: IntrinsicElement;
+            img: ImageElement;
+            dl: IntrinsicElement;
+            dd: IntrinsicElement;
+            dt: IntrinsicElement;
         }
 
         interface ElementClass extends ElementAttributesProperty {
             children?: any;
-            render(): HTMLElement|KnockoutObservableArray<HTMLElement>;
+            render(): RenderOutput;
         }
 
         type Element = HTMLElement;
@@ -94,7 +142,7 @@ function appendChild(flatten: KnockoutObservableArray<Node>, child: JSX.Child, i
     } else if (child instanceof Node) {
         flatten.push(child);
         ret = ko.pureComputed(() => index() + 1);
-    } else if (child === undefined) {
+    } else if (child === undefined || child === null) {
         flatten.push(document.createTextNode("undefined"));
         ret = ko.pureComputed(() => index() + 1);
     } else if (isObservableArray<any>(child)) {
@@ -150,8 +198,7 @@ function flattenArray(children: JSX.Child[]) {
     return flatten;
 }
 
-function appendChildren(element: HTMLElement, children: JSX.Child[]){
-    const flatten = flattenArray(children);
+function append(element: Element, flatten: KnockoutObservableArray<Node>) {
     const onChanges: any = (changes: Change<Node>[]) => {
         for (const change of changes) {
             if (change.status === "added"){
@@ -171,6 +218,11 @@ function appendChildren(element: HTMLElement, children: JSX.Child[]){
     for (const child of flatten()) {
         element.appendChild(child);
     }
+}
+
+function appendChildren(element: HTMLElement, children: JSX.Child[]){
+    const flatten = flattenArray(children);
+    append(element, flatten);
 }
 
 export interface ForEachElementParameters<T> {
@@ -233,7 +285,8 @@ export class If implements JSX.ElementClass {
     }
 }
 
-export function ko_ifdef<T>(condition: () => T | undefined, childFactory: (value: T) => HTMLElement) {
+export function ko_ifdef<T>(condition: KnockoutObservable<T>, childFactory: (value: T) => HTMLElement): KnockoutObservableArray<HTMLElement>;
+export function ko_ifdef<T>(condition: () => T | undefined, childFactory: (value: T) => HTMLElement): KnockoutObservableArray<HTMLElement> {
     const array = ko.observableArray< HTMLElement>();
     const current = condition();
     if (current !== undefined){
@@ -270,6 +323,24 @@ export function ko_if(condition: () => boolean, childFactory: () => HTMLElement)
     return array;
 }
 
+export function ko_ifnot(condition: () => boolean, childFactory: () => HTMLElement){
+    const array = ko.observableArray< HTMLElement>();
+    if (condition()){
+        array.push(childFactory());
+    }
+    const observableCondition = ko.isSubscribable(condition) ?
+        condition : ko.computed(condition);
+    observableCondition.subscribe((newValue) => {
+        if (newValue) {
+            array.removeAll();
+        }
+        else{
+            array.push(childFactory());
+        }
+    });
+    return array;
+}
+
 export type Children = JSX.Child[];
 
 function isJSXElement(x: any): x is JSX.ElementClass {
@@ -294,7 +365,7 @@ export const React = {
                 if (attributes.hasOwnProperty(attribute)) {
                     const bindingHandler = ko.bindingHandlers[attribute];
                     if (bindingHandler){
-                        if (allBindingHandlers == null) {
+                        if (!allBindingHandlers) {
                             allBindingHandlers = (() => attributes) as KnockoutAllBindingsAccessor;
                             allBindingHandlers.get = (key) => attributes[key];
                             allBindingHandlers.has = (key) => attributes[key] !== undefined;
@@ -310,13 +381,13 @@ export const React = {
                         if (update) {
                             update(element, valueAccessor, allBindingHandlers, null, fakeBindingContext);
                             if (ko.isSubscribable(value)) {
-                                value.subscribe((newValue) => update(element, valueAccessor, allBindingHandlers, null, fakeBindingContext));
+                                value.subscribe((newValue) => update(element, valueAccessor, <KnockoutAllBindingsAccessor>allBindingHandlers, null, fakeBindingContext));
                             } else {
                                 for (const prop in value) {
                                     if (Object.prototype.hasOwnProperty.call(value, prop)) {
                                         const subValue = value[prop];
                                         if (ko.isSubscribable(subValue)) {
-                                            subValue.subscribe((newValue) => update(element, valueAccessor, allBindingHandlers, null, fakeBindingContext));
+                                            subValue.subscribe((newValue) => update(element, valueAccessor, <KnockoutAllBindingsAccessor>allBindingHandlers, null, fakeBindingContext));
                                         }
                                     }
                                 }
@@ -350,5 +421,29 @@ export const React = {
         }
     },
 };
+
+export function init(root: JSX.RenderOutput, elementTagName: string) {
+    if (document.readyState === "loading") {
+        document.onreadystatechange = () => { if (document.readyState === "interactive") { initApplication(); } };
+    } else {
+        initApplication();
+    }
+    
+    function initApplication() {
+        const folkeView = document.getElementsByTagName(elementTagName);
+        if (folkeView) {
+            if (isObservableArray(root)) {
+                append(folkeView[0], root);
+            }
+            else {
+                folkeView[0].appendChild(root);
+            }
+        }
+        else {
+            throw Error(`Can't find ${elementTagName} element`);
+        }
+    }
+}
+
 
 export * from "./knockout-projection";

@@ -44,7 +44,7 @@ function appendChild(flatten, child, index) {
         flatten.push(child);
         ret = ko.pureComputed(function () { return index() + 1; });
     }
-    else if (child === undefined) {
+    else if (child === undefined || child === null) {
         flatten.push(document.createTextNode("undefined"));
         ret = ko.pureComputed(function () { return index() + 1; });
     }
@@ -107,8 +107,7 @@ function flattenArray(children) {
     }
     return flatten;
 }
-function appendChildren(element, children) {
-    var flatten = flattenArray(children);
+function append(element, flatten) {
     var onChanges = function (changes) {
         for (var _i = 0, changes_2 = changes; _i < changes_2.length; _i++) {
             var change = changes_2[_i];
@@ -130,6 +129,10 @@ function appendChildren(element, children) {
         var child = _a[_i];
         element.appendChild(child);
     }
+}
+function appendChildren(element, children) {
+    var flatten = flattenArray(children);
+    append(element, flatten);
 }
 var ForEachT = /** @class */ (function () {
     function ForEachT() {
@@ -221,6 +224,24 @@ function ko_if(condition, childFactory) {
     return array;
 }
 exports.ko_if = ko_if;
+function ko_ifnot(condition, childFactory) {
+    var array = ko.observableArray();
+    if (condition()) {
+        array.push(childFactory());
+    }
+    var observableCondition = ko.isSubscribable(condition) ?
+        condition : ko.computed(condition);
+    observableCondition.subscribe(function (newValue) {
+        if (newValue) {
+            array.removeAll();
+        }
+        else {
+            array.push(childFactory());
+        }
+    });
+    return array;
+}
+exports.ko_ifnot = ko_ifnot;
 function isJSXElement(x) {
     return x.render !== undefined;
 }
@@ -240,7 +261,7 @@ exports.React = {
                 if (attributes.hasOwnProperty(attribute)) {
                     var bindingHandler = ko.bindingHandlers[attribute];
                     if (bindingHandler) {
-                        if (allBindingHandlers_1 == null) {
+                        if (!allBindingHandlers_1) {
                             allBindingHandlers_1 = (function () { return attributes; });
                             allBindingHandlers_1.get = function (key) { return attributes[key]; };
                             allBindingHandlers_1.has = function (key) { return attributes[key] !== undefined; };
@@ -298,4 +319,29 @@ exports.React = {
         }
     },
 };
+function init(root, elementTagName) {
+    if (document.readyState === "loading") {
+        document.onreadystatechange = function () { if (document.readyState === "interactive") {
+            initApplication();
+        } };
+    }
+    else {
+        initApplication();
+    }
+    function initApplication() {
+        var folkeView = document.getElementsByTagName(elementTagName);
+        if (folkeView) {
+            if (isObservableArray(root)) {
+                append(folkeView[0], root);
+            }
+            else {
+                folkeView[0].appendChild(root);
+            }
+        }
+        else {
+            throw Error("Can't find " + elementTagName + " element");
+        }
+    }
+}
+exports.init = init;
 __export(require("./knockout-projection"));

@@ -7,8 +7,8 @@
   "scripts": {
     "test": "ava dist/tests",
     "test:watch": "ava --watch dist/tests",
-    "prepublish": "tsc -p .",
-    "prepublish:watch": "tsc -w -p ."
+    "prepare": "tsc -p .",
+    "watch": "tsc -w -p ."
   },
   "keywords": [
     "knockout",
